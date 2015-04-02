@@ -14,8 +14,8 @@ ENDPOINT_COMPOSITIONS = '/compositions'
 ENDPOINT_STATIONS = '/metadata/station'
 STATION = 'HKI'
 
-# Loads the station list
 def load_stations():
+    """Load the station list."""
     url = '%s%s' % (API, ENDPOINT_STATIONS)
     print('Getting stations from "%s"' % url)
     r = requests.get(url)
@@ -28,6 +28,10 @@ def load_stations():
  
  
 def load_trains_for_station(station, arriving_count=20, departing_count=20):
+    """Load the trains for a given station code.
+    
+       Optionally limits the number of arriving and departing trains.
+    """
     params = { 'station': station,
                'arrivingTrains': arriving_count,
                'departedTrains': departing_count }
@@ -60,7 +64,6 @@ def load_trains_for_station(station, arriving_count=20, departing_count=20):
     
         stops = []
         
-    
         for r in rows:
             station = r['stationShortCode']
             stopping = r['trainStopping']
@@ -68,7 +71,6 @@ def load_trains_for_station(station, arriving_count=20, departing_count=20):
             stop_type = r['type']
         
             if station == STATION and stopping and not cancelled:
-        
                 stops.append(station)
 
                 train_info = { 'train_type': train_type,
@@ -89,12 +91,6 @@ def load_trains_for_station(station, arriving_count=20, departing_count=20):
                 elif stop_type == 'DEPARTURE':
                     departures.append(train_info)
     
-        #print('Composition:')
-        #params = 'departure_date=2015-01-29'
-        #url = '%s%s/%s?%s' % (API, ENDPOINT_COMPOSITIONS, t['trainNumber'], params)
-        #print('About to hit URL %s' % url)
-        #response = urllib.request.urlopen(url)
-
     return (arrivals, departures)
     
 if __name__ == '__main__':
