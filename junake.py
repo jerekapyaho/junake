@@ -3,8 +3,6 @@ import codecs
 import requests
 import datetime
 import argparse
-
-# Trying Arrow for date handling
 import arrow
 
 
@@ -12,7 +10,7 @@ API = 'http://rata.digitraffic.fi/api/v1'
 ENDPOINT_LIVE_TRAINS = '/live-trains'
 ENDPOINT_COMPOSITIONS = '/compositions'
 ENDPOINT_STATIONS = '/metadata/station'
-STATION = 'HKI'
+ENDPOINT_SCHEDULES = '/schedules'
 
 def load_stations():
     """Load the station list."""
@@ -29,12 +27,11 @@ def load_stations():
  
 def load_trains_for_station(station, arriving_count=20, departing_count=20):
     """Load the trains for a given station code.
-    
-       Optionally limits the number of arriving and departing trains.
+    Optionally limits the number of arriving and departing trains.
     """
     params = { 'station': station,
-               'arrivingTrains': arriving_count,
-               'departedTrains': departing_count }
+               'arriving_trains': arriving_count,
+               'departing_trains': departing_count }
 
     url = '%s%s' % (API, ENDPOINT_LIVE_TRAINS)
     print('Loading train data from "%s", params = %s' % (url, params))
@@ -65,12 +62,12 @@ def load_trains_for_station(station, arriving_count=20, departing_count=20):
         stops = []
         
         for r in rows:
-            station = r['stationShortCode']
+            current_station = r['stationShortCode']
             stopping = r['trainStopping']
             cancelled = r['cancelled']
             stop_type = r['type']
         
-            if station == STATION and stopping and not cancelled:
+            if current_station == station and stopping and not cancelled:
                 stops.append(station)
 
                 train_info = { 'train_type': train_type,
@@ -93,14 +90,9 @@ def load_trains_for_station(station, arriving_count=20, departing_count=20):
     
     return (arrivals, departures)
     
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Show trains arriving at or departing from a given station.')
-    parser.add_argument('-s', '--station', help='Station short code')
-    args = parser.parse_args()
     
-    stations = load_stations()
-    
-    (arrivals, departures) = load_trains_for_station(args.station)
+def station_trains(station):
+    (arrivals, departures) = load_trains_for_station(station)
     
     print('\nArrivals')
     for i in arrivals:
@@ -115,3 +107,64 @@ if __name__ == '__main__':
         if 'actual_time' in i:
             actual = i['actual_time'].format('HH.mm')
         print('%s%d\ts=%s\ta=%s' % (i['train_type'], i['train_number'], i['scheduled_time'].format('HH.mm'), actual))
+    
+   
+def load_trains_for_route(route_from, route_to):
+    params = { 'departure_station': route_from,
+               'arrival_station': route_to,
+               'include_nonstopping': False }
+
+    url = '%s%s' % (API, ENDPOINT_SCHEDULES)
+    print('Loading schedule data from "%s", params = %s' % (url, params))
+
+    r = requests.get(url, params=params)
+    print(r.url)
+    json_data = r.json()
+    #print(json_data)
+
+    trains = json_data
+    print('Route %s-%s has %d trains' % (route_from, route_to, len(trains)))
+    
+    for t in trains:
+        train_number = t['trainNumber']
+        train_type = t['trainType']
+        print('%s%d: ' % (train_type, train_number))        
+    
+        rows = t['timeTableRows']
+        print('Number of timetable rows = %d' % len(rows))
+
+        scheduled_time = None
+        actual_time = None
+        estimated_time = None
+    
+        stops = []
+        
+        for r in rows:
+            current_station = r['stationShortCode']
+            stopping = r['trainStopping']
+            cancelled = r['cancelled']
+            stop_type = r['type']
+        
+
+def route_trains(route_from, route_to):
+    load_trains_for_route(route_from, route_to)
+
+stations = []
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description='Show trains arriving at or departing from a given station.')
+    parser.add_argument('-s', '--station', help='Station short code')
+    parser.add_argument('-r', '--route', help='Directed route XXX-YYY between stations')
+    args = parser.parse_args()
+    
+    stations = load_stations()
+    
+    if args.station:
+        station_trains(args.station)
+    elif args.route:
+        route_parts = args.route.split('-')
+        print(route_parts)
+        if len(route_parts) == 2:
+            route_trains(route_parts[0], route_parts[1])
+        else:
+            print('Route must have two stations, separated with a dash.')
