@@ -125,29 +125,59 @@ def load_trains_for_route(route_from, route_to):
     trains = json_data
     print('Route %s-%s has %d trains' % (route_from, route_to, len(trains)))
     
+    train_strings = []
+    
     for t in trains:
+        train_str = ''
+                
         train_number = t['trainNumber']
         train_type = t['trainType']
-        print('%s%d: ' % (train_type, train_number))        
+        train_str += ('%s%d:\n' % (train_type, train_number))        
     
         rows = t['timeTableRows']
-        print('Number of timetable rows = %d' % len(rows))
+        #print('Number of timetable rows = %d' % len(rows))
 
         scheduled_time = None
         actual_time = None
         estimated_time = None
     
         stops = []
-        
+
         for r in rows:
             current_station = r['stationShortCode']
             stopping = r['trainStopping']
             cancelled = r['cancelled']
             stop_type = r['type']
-        
 
+            if stop_type == 'ARRIVAL':
+                train_str += '>'
+            elif stop_type == 'DEPARTURE':
+                train_str += '<'
+            train_str += current_station + ' '
+            
+            if 'scheduledTime' in r:
+                scheduled_time = arrow.get(r['scheduledTime']).to('local')
+                train_str += scheduled_time.format('HH.mm')
+
+            if 'actualTime' in r:
+                actual_time = arrow.get(r['actualTime']).to('local')
+                train_str += ' -> ' + actual_time.format('HH.mm')
+
+            if 'liveEstimateTime' in r:
+                estimated_time = arrow.get(r['liveEstimateTime']).to('local')
+                train_str += ' ~' + estimated_time.format('HH.mm')
+
+            train_str += '\n'
+            
+        #train_str += '\n'
+        train_strings.append(train_str)
+        
+    return train_strings
+    
 def route_trains(route_from, route_to):
-    load_trains_for_route(route_from, route_to)
+    train_strings = load_trains_for_route(route_from, route_to)
+    for ts in train_strings:
+        print(ts + '\n')
 
 stations = []
 
