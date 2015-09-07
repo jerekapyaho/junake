@@ -1,5 +1,5 @@
 import os 
-from flask import flask
+from flask import Flask
 
 import json
 import codecs
@@ -183,25 +183,6 @@ def route_trains(route_from, route_to):
     for ts in train_strings:
         print(ts + '\n')
 
-stations = []
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Show trains arriving at or departing from a given station.')
-    parser.add_argument('-s', '--station', help='Station short code')
-    parser.add_argument('-r', '--route', help='Directed route XXX-YYY between stations')
-    args = parser.parse_args()
-    
-    stations = load_stations()
-    
-    if args.station:
-        station_trains(args.station)
-    elif args.route:
-        route_parts = args.route.split('-')
-        print(route_parts)
-        if len(route_parts) == 2:
-            route_trains(route_parts[0], route_parts[1])
-        else:
-            print('Route must have two stations, separated with a dash.')
 
 app = Flask(__name__)
 
@@ -209,3 +190,10 @@ app = Flask(__name__)
 def hello():
     return 'Hello, world!'
     
+@app.route('/live-trains')
+def live_trains():
+    return 'Live trains!'
+    
+if __name__ == '__main__':
+    app.debug = True
+    app.run()
