@@ -1,3 +1,6 @@
+import os 
+from flask import flask
+
 import json
 import codecs
 import requests
@@ -5,6 +8,7 @@ import datetime
 import argparse
 import arrow
 
+app = Flask(__name__)
 
 API = 'http://rata.digitraffic.fi/api/v1'
 ENDPOINT_LIVE_TRAINS = '/live-trains'
@@ -198,3 +202,10 @@ if __name__ == '__main__':
             route_trains(route_parts[0], route_parts[1])
         else:
             print('Route must have two stations, separated with a dash.')
+
+app = Flask(__name__)
+
+@app.route('/')
+def hello():
+    return 'Hello, world!'
+    
