@@ -1,5 +1,6 @@
 import os 
 from flask import Flask
+from flask import Response
 
 import json
 import codecs
@@ -192,7 +193,14 @@ def hello():
     
 @app.route('/live-trains')
 def live_trains():
-    return 'Live trains!'
+    url = '%s%s' % (API, ENDPOINT_LIVE_TRAINS)
+    #print('Loading train data from "%s", params = %s' % (url, params))
+    
+    r = requests.get(url)
+    #print(r.url)
+    json_data = r.json()
+    #print(json_data)
+    return Response(json.dumps(json_data), mimetype='application/json')
     
 if __name__ == '__main__':
     app.debug = True
