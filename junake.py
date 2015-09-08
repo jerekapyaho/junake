@@ -184,6 +184,33 @@ def route_trains(route_from, route_to):
     for ts in train_strings:
         print(ts + '\n')
 
+def live_trains(params):
+    url = '%s%s' % (API, ENDPOINT_LIVE_TRAINS)
+    r = requests.get(url, params=params)
+    return r.json()
+
+def filtered_timetable_row(row):
+    r = row
+    r.pop('trainStopping', None)
+    r.pop('commercialStop', None)
+    r.pop('cancelled', None)
+    return r 
+    
+def filtered_live_trains(train_data, station, train_set):
+    trains = [t for t in train_data if t['trainCategory'] in train_set]
+    
+    result = []
+    
+    for t in trains:
+        rows = [filtered_timetable_row(r) for r in t['timeTableRows'] if r['stationShortCode'] == station 
+                                 and r['trainStopping']
+                                 and r['commercialStop'] 
+                                 and not r['cancelled']
+                                 and (r['type'] == 'ARRIVAL' or r['type'] == 'DEPARTURE')]        
+        t['timeTableRows'] = rows        
+        result.append(t)
+        
+    return result
 
 app = Flask(__name__)
 
@@ -192,15 +219,16 @@ def hello():
     return 'Hello, world!'
     
 @app.route('/live-trains')
-def live_trains():
-    url = '%s%s' % (API, ENDPOINT_LIVE_TRAINS)
-    #print('Loading train data from "%s", params = %s' % (url, params))
-    
-    r = requests.get(url)
-    #print(r.url)
-    json_data = r.json()
-    #print(json_data)
-    return Response(json.dumps(json_data), mimetype='application/json')
+def live_trains_route():
+    station = 'TPE'
+    arriving_count = 20
+    departing_count = 20
+    params = { 'station': station,
+               'arriving_trains': arriving_count,
+               'departing_trains': departing_count }
+    json_data = live_trains(params)
+    reduced_json_data = filtered_live_trains(json_data, station, set('Long-distance', 'Commuter'))
+    return Response(json.dumps(reduced_json_data), mimetype='application/json')
     
 if __name__ == '__main__':
     app.debug = True
