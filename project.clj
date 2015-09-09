@@ -10,6 +10,5 @@
   :min-lein-version "2.0.0"
   :plugins [[lein-ring "0.8.13"]]
   :ring {:handler junake.web/app}
-  :profiles
   :uberjar-name "junake-standalone.jar"
   :profiles {:dev {:dependencies [[javax.servlet/servlet-api "2.5"]]}})
