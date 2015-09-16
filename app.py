@@ -10,6 +10,11 @@ class Junake(object):
     def stations(self):
         return "stations (coming soon)"
 
+    @cherrypy.expose
+    def live_trains(self):
+        return "live-trains (coming soon)"
+        # Note that underscore in function name works out of the box for the dash in the URL
+        
 if __name__ == '__main__':
     cherrypy.config.update({'server.socket_host': '0.0.0.0',})
     cherrypy.config.update({'server.socket_port': int(os.environ.get('PORT', '5000')),})
