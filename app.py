@@ -1,6 +1,11 @@
 import cherrypy
 import os
 import requests
+import json
+
+BASE_URL = 'http://rata.digitraffic.fi/api/v1'
+STATIONS_ENDPOINT = '/metadata/station'
+LIVE_TRAINS_ENDPOINT = '/live-trains'
 
 class Junake(object):
     @cherrypy.expose
@@ -9,11 +14,17 @@ class Junake(object):
 
     @cherrypy.expose
     def stations(self):
-        return "stations (coming soon)"
+        r = requests.get(BASE_URL + STATIONS_ENDPOINT)
+        return json.dumps(r.json(), indent=4)
 
     @cherrypy.expose
-    def live_trains(self):
-        return "live-trains (coming soon)"
+    def live_trains(self, station=None):
+        params = {}
+        if station != None:
+            params['station'] = station
+            
+        r = requests.get(BASE_URL + LIVE_TRAINS_ENDPOINT, params)
+        return json.dumps(r.json(), indent=4)
         # Note that underscore in function name works out of the box for the dash in the URL
         
 if __name__ == '__main__':
