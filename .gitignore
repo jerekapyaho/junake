@@ -9,4 +9,5 @@ pom.xml
 /target
 
 # Python
-/venv
+/venv/
+/__pycache__/
