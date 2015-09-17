@@ -24,7 +24,7 @@ class Junake(object):
         return json.dumps(r.json(), indent=4)
 
     @cherrypy.expose
-    def live_trains(self, station=None, arriving_trains=None, departing_trains=None, category='all'):
+    def live_trains(self, station=None, arriving_trains=None, departing_trains=None, category='all', epoch=False):
         """
         Implements the live-trains endpoint.
         Note that an underscore in the function name replaces the dash in the URL
@@ -77,7 +77,7 @@ class Junake(object):
             train_set = set([TRAIN_CATEGORY[k] for k in TRAIN_CATEGORY.keys()])
         else:
             train_set = set([TRAIN_CATEGORY[c] for c in category.split(',')])
-        
+
         #
         # Get the trains that match our desired category
         #
@@ -101,7 +101,32 @@ class Junake(object):
             destination_station = all_rows[-1]['stationShortCode']
         
             rows = relevant_timetable_rows(all_rows)
-            
+
+            # Process the times in the timetable rows.
+            # Convert them to epoch time if necessary.
+            for r in rows:
+                scheduled_time = None
+                live_estimate_time = None
+                actual_time = None
+                
+                # There is always a scheduled time
+                scheduled_time = arrow.get(r['scheduledTime'])
+                
+                # There may be a live estimate time
+                if 'liveEstimateTime' in r:
+                    live_estimate_time = arrow.get(r['liveEstimateTime'])
+                    
+                # There may be an actual time
+                if 'actualTime' in r:
+                    actual_time = arrow.get(r['actualTime'])
+                    
+                if epoch:
+                    r['scheduledTime'] = scheduled_time.timestamp
+                    if live_estimate_time:
+                        r['liveEstimateTime'] = live_estimate_time.timestamp
+                    if actual_time:
+                        r['actualTime'] = actual_time.timestamp
+
             # Replace the old timetable row list with the new filtered one
             t['timeTableRows'] = rows
 
