@@ -8,6 +8,10 @@ BASE_URL = 'http://rata.digitraffic.fi/api/v1'
 STATIONS_ENDPOINT = '/metadata/station'
 LIVE_TRAINS_ENDPOINT = '/live-trains'
 
+TRAIN_CATEGORY = {'longDistance': 'Long-distance',
+                  'commuter': 'Commuter',
+                  'cargo': 'Cargo'}
+                  
 class Junake(object):
     @cherrypy.expose
     def index(self):
@@ -45,7 +49,9 @@ class Junake(object):
             #
             # Using list comprehension
             #
-            rows = [r for r in all_rows if r['stationShortCode'] == station and r['trainStopping'] and r['commercialStop'] and not r['cancelled']]
+            rows = [r for r in all_rows if r['stationShortCode'] == station 
+                                       and r['trainStopping'] 
+                                       and not r['cancelled']]
             
             return rows
             
@@ -65,9 +71,12 @@ class Junake(object):
         arrivals = []
         departures = []
 
-        # TODO: Parse the category argument. Comma separated. Allowed values: all, longDistance, commuter, cargo.
-        
-        train_set = set(['Long-distance', 'Commuter'])
+        # Parse the category argument. Comma separated. 
+        # Allowed values: all, longDistance, commuter, cargo.
+        if category == 'all':
+            train_set = set([TRAIN_CATEGORY[k] for k in TRAIN_CATEGORY.keys()])
+        else:
+            train_set = set([TRAIN_CATEGORY[c] for c in category.split(',')])
         
         #
         # Get the trains that match our desired category
