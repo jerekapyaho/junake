@@ -20,7 +20,7 @@ class Junake(object):
         return json.dumps(r.json(), indent=4)
 
     @cherrypy.expose
-    def live_trains(self, station=None, arriving_trains=None, departing_trains=None):
+    def live_trains(self, station=None, arriving_trains=None, departing_trains=None, category='all'):
         """
         Implements the live-trains endpoint.
         Note that an underscore in the function name replaces the dash in the URL
@@ -29,19 +29,22 @@ class Junake(object):
 
         def relevant_timetable_rows(all_rows):
             """Returns the timetable rows which are relevant to us."""
+            #
             # The traditional way
+            #
             rows = []
             for r in all_rows:
                 row_station = r['stationShortCode']
                 is_stopping = r['trainStopping']
                 cancelled = r['cancelled']
                 stop_type = r['type']
-                is_commercial_stop = r['commercialStop']
-            
-                if row_station == station and is_stopping and is_commercial_stop and not cancelled:
+                
+                if row_station == station and is_stopping and not cancelled:
                     rows.append(r)
-
+                    
+            #
             # Using list comprehension
+            #
             rows = [r for r in all_rows if r['stationShortCode'] == station and r['trainStopping'] and r['commercialStop'] and not r['cancelled']]
             
             return rows
@@ -61,6 +64,8 @@ class Junake(object):
         
         arrivals = []
         departures = []
+
+        # TODO: Parse the category argument. Comma separated. Allowed values: all, longDistance, commuter, cargo.
         
         train_set = set(['Long-distance', 'Commuter'])
         
@@ -90,7 +95,8 @@ class Junake(object):
             
             # Replace the old timetable row list with the new filtered one
             t['timeTableRows'] = rows
-       
+
+        #print(len(trains))       
         return json.dumps(trains, indent=4)
         
 if __name__ == '__main__':
