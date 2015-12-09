@@ -14,6 +14,8 @@ TRAIN_CATEGORY = {'longDistance': 'Long-distance',
                   'commuter': 'Commuter',
                   'cargo': 'Cargo'}
 
+JSON_MIME_TYPE = 'application/json'
+
 @app.route('/')
 def index():
     return 'Hello, world!'
@@ -21,14 +23,14 @@ def index():
 @app.route('/stations')
 def stations(self):
     r = requests.get(BASE_URL + STATIONS_ENDPOINT)
-        
-    return json.dumps(r.json(), indent=4)
 
-@app.route('/live-trains')
+    js = json.dumps(r.json())
+    resp = Response(js, status=200, mimetype=JSON_MIME_TYPE)
+    return resp
+
+@app.route(LIVE_TRAINS_ENDPOINT)
 def live_trains(self, station=None, arriving_trains=None, departing_trains=None, category='all', epoch=False):
-    """
-    Implements the live-trains endpoint.
-    """
+    """Implements the live-trains endpoint."""
 
     def relevant_timetable_rows(all_rows):
         """Returns the timetable rows which are relevant to us."""
@@ -104,9 +106,11 @@ def live_trains(self, station=None, arriving_trains=None, departing_trains=None,
         # Replace the old timetable row list with the new filtered one
         t['timeTableRows'] = rows
 
-    #print(len(trains))       
-    return json.dumps(trains, indent=4)
-
+    #print(len(trains))
+    
+    js = json.dumps(trains)
+    resp = Response(js, status=200, mimetype=JSON_MIME_TYPE)
+    return resp
 
 if __name__ == '__main__':
     app.run()
